@@ -26,7 +26,7 @@ public class DbConnector {
 	
 	// SQL queries
 	private static String SONGS_QUERY = "SELECT * FROM Songs WHERE FileModified >= 41870";
-	private static String PLAYEDS_QUERY = "SELECT * FROM Played WHERE IDPlayed > 25000";
+	private static String PLAYEDS_QUERY = "SELECT * FROM Played WHERE IDPlayed > 22000";
 
 	public DbConnector() {
 		

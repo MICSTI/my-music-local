@@ -1,3 +1,4 @@
 C:\Users\michael.stifter\Downloads\myMusic\myMusic\db\MM_20140823.DB
-20
-80000
+C:\Users\michael.stifter\workspace\MyMusicLocal\desktop.xml
+1408793886
+23074
