@@ -22,11 +22,25 @@ public class DataLoader {
 	private int playedId;
 	
 	public DataLoader() {
-		// init values
-		initValues();
+		
 	}
 	
-	public void readConfigFile() {
+	public boolean performUpdate() {
+		boolean success = true;
+		
+		// init values
+		initValues();
+		
+		// read config file
+		readConfigFile();
+		
+		// write config file
+		writeConfigFile();
+		
+		return success;
+	}
+	
+	private void readConfigFile() {
 		try (BufferedReader br = new BufferedReader(new FileReader(CONFIG_FILE))) {
 		    String line;
 		    int count = 1;
@@ -54,7 +68,7 @@ public class DataLoader {
 		}
 	}
 	
-	public void writeConfigFile() {
+	private void writeConfigFile() {
 		BufferedWriter out = null;
 		
 		try {
@@ -93,29 +107,4 @@ public class DataLoader {
 		modification = 0;
 		playedId = 0;
 	}
-
-	public String getDbPath() {
-		return dbPath;
-	}
-
-	public void setDbPath(String dbPath) {
-		this.dbPath = dbPath;
-	}
-
-	public long getModification() {
-		return modification;
-	}
-
-	public void setModification(long modification) {
-		this.modification = modification;
-	}
-
-	public int getPlayedId() {
-		return playedId;
-	}
-
-	public void setPlayedId(int playedId) {
-		this.playedId = playedId;
-	}
-
 }
