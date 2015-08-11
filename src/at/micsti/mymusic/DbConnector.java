@@ -113,10 +113,10 @@ public class DbConnector {
 						int id = result.getInt("IDPlayed");
 						int mmid = result.getInt("IDSong");
 						
-						long playDate = result.getLong("PlayDate");
-						long utcOffset = result.getLong("UTCOffset");
+						double playDate = result.getLong("PlayDate");
+						double utcOffset = result.getLong("UTCOffset");
 						
-						long timestamp = playDate + utcOffset;
+						double timestamp = playDate + utcOffset;
 						
 						// add attributes to played
 						Played played = new Played();

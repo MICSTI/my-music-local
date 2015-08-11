@@ -4,7 +4,7 @@ public class Played {
 	
 	private int id;
 	private int mmId;
-	private long timestamp;
+	private double timestamp;
 	
 	public Played() {
 		
@@ -26,11 +26,11 @@ public class Played {
 		this.mmId = mmId;
 	}
 
-	public long getTimestamp() {
+	public double getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(long timestamp) {
+	public void setTimestamp(double timestamp) {
 		this.timestamp = timestamp;
 	}
 
