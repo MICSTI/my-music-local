@@ -7,6 +7,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.DatabaseMetaData;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DbConnector {
 	
@@ -21,21 +23,79 @@ public class DbConnector {
 	
 	// database connection
 	private Connection connection;
+	
+	// SQL queries
+	private static String SONGS_QUERY = "SELECT * FROM Songs WHERE FileModified >= 41870";
 
-
-	public DbConnector(String dbPath) {
-		path = dbPath;
+	public DbConnector() {
 		
-		dbUrl = jdbc + ":" + path;
 	}
 	
-	public void createConnection() {
+	public boolean init(String dbPath) {
+		path = dbPath;
+		
+		// build database url
+		dbUrl = jdbc + ":" + path;
+		
+		return createConnection();
+	}
+	
+	public List<Song> getSongs() {
+		List<Song> songs = new ArrayList<Song>();
+		
+		try {
+			Statement stmt = connection.createStatement();
+			
+			try {
+				ResultSet result = stmt.executeQuery(SONGS_QUERY);
+				
+				try {
+					while (result.next()) {
+						Song song = new Song();
+						
+						int id = result.getInt("ID");
+						String name = result.getString("SongTitle");
+						String artistName = result.getString("Artist");
+						int discNo = result.getInt("DiscNumber");
+						int trackNo = result.getInt("TrackNumber");
+						int rating = result.getInt("Rating");
+						int bitrate = result.getInt("Bitrate");
+						String dateAdded = result.getString("DateAdded");
+						long length = result.getInt("SongLength");
+						
+						String recordName = result.getString("Album");
+						
+						// if record name is empty, try to get it from AlbumArtist
+						if (recordName.isEmpty()) {
+							recordName = result.getString("AlbumArtist");
+						}
+						
+						// add song to list
+						songs.add(song);
+					}
+				} finally {
+					try { result.close(); } catch (Exception e) { e.printStackTrace(); }
+				}
+			} finally {
+				try { stmt.close(); } catch (Exception e) { e.printStackTrace(); }
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return songs;
+	}
+	
+	private boolean createConnection() {
 		try {
 			connection = DriverManager.getConnection(dbUrl);
+			return true;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		return false;
 	}
 	
 }

@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 
 public class DataLoader {
 	
@@ -75,8 +76,12 @@ public class DataLoader {
 	}
 	
 	private void getValuesFromDatabase() {
-		dbConnector = new DbConnector(dbPath);
-		dbConnector.createConnection();
+		// init database connector
+		dbConnector = new DbConnector();
+		dbConnector.init(dbPath);
+		
+		// get songs
+		List<Song> songs = dbConnector.getSongs();
 	}
 	
 	private void writeConfigFile() {
