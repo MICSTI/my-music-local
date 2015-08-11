@@ -12,6 +12,9 @@ public class DataLoader {
 	// config file name
 	private static String CONFIG_FILE = "my-music-config.txt";
 	
+	// MediaMonkey database file path
+	private String dbPath;
+	
 	// modification timestamp
 	private long modification;
 	
@@ -30,10 +33,13 @@ public class DataLoader {
 		    
 		    while ((line = br.readLine()) != null) {
 		       if (count == 1) {
-		    	   // first line is modification timestamp
-		    	   modification = Long.valueOf(line.trim());
+		    	   // first line is MediaMonkey database path
+		    	   dbPath = line.trim();
 		       } else if (count == 2) {
-		    	   // second line is last imported played id
+		    	   // second line is modification timestamp
+		    	   modification = Long.valueOf(line.trim());
+		       } else if (count == 3) {
+		    	   // third line is last imported played id
 		    	   playedId = Integer.valueOf(line.trim());
 		       }
 		       
@@ -54,6 +60,12 @@ public class DataLoader {
 		try {
 			FileWriter fstream = new FileWriter(CONFIG_FILE);
 			out = new BufferedWriter(fstream);
+			
+			// MediaMonkey database path
+			out.write(dbPath);
+			
+			// new line
+			out.write(System.lineSeparator());
 			
 			// modification timestamp
 			out.write(String.valueOf(modification));
@@ -80,6 +92,14 @@ public class DataLoader {
 	private void initValues() {
 		modification = 0;
 		playedId = 0;
+	}
+
+	public String getDbPath() {
+		return dbPath;
+	}
+
+	public void setDbPath(String dbPath) {
+		this.dbPath = dbPath;
 	}
 
 	public long getModification() {
