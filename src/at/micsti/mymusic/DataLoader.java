@@ -12,6 +12,9 @@ public class DataLoader {
 	// config file name
 	private static String CONFIG_FILE = "my-music-config.txt";
 	
+	// database connector
+	private DbConnector dbConnector;
+	
 	// MediaMonkey database file path
 	private String dbPath;
 	
@@ -33,6 +36,9 @@ public class DataLoader {
 		
 		// read config file
 		readConfigFile();
+		
+		// retrieve values from database
+		getValuesFromDatabase();
 		
 		// write config file
 		writeConfigFile();
@@ -66,6 +72,11 @@ public class DataLoader {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	private void getValuesFromDatabase() {
+		dbConnector = new DbConnector(dbPath);
+		dbConnector.createConnection();
 	}
 	
 	private void writeConfigFile() {
