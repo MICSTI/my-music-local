@@ -26,6 +26,7 @@ public class DbConnector {
 	
 	// SQL queries
 	private static String SONGS_QUERY = "SELECT * FROM Songs WHERE FileModified >= 41870";
+	private static String PLAYEDS_QUERY = "SELECT * FROM Played WHERE IDPlayed > 25000";
 
 	public DbConnector() {
 		
@@ -51,8 +52,6 @@ public class DbConnector {
 				
 				try {
 					while (result.next()) {
-						Song song = new Song();
-						
 						int id = result.getInt("ID");
 						String name = result.getString("SongTitle");
 						String artistName = result.getString("Artist");
@@ -70,6 +69,20 @@ public class DbConnector {
 							recordName = result.getString("AlbumArtist");
 						}
 						
+						// add attributes to song
+						Song song = new Song();
+						
+						song.setId(id);
+						song.setName(name);
+						song.setArtistName(artistName);
+						song.setDiscNo(discNo);
+						song.setTrackNo(trackNo);
+						song.setRating(rating);
+						song.setBitrate(bitrate);
+						song.setDateAdded(dateAdded);
+						song.setLength(length);
+						song.setRecordName(recordName);
+					
 						// add song to list
 						songs.add(song);
 					}
@@ -84,6 +97,48 @@ public class DbConnector {
 		}
 		
 		return songs;
+	}
+	
+	public List<Played> getPlayeds() {
+		List<Played> playeds = new ArrayList<Played>();
+		
+		try {
+			Statement stmt = connection.createStatement();
+			
+			try {
+				ResultSet result = stmt.executeQuery(PLAYEDS_QUERY);
+				
+				try {
+					while (result.next()) {
+						int id = result.getInt("IDPlayed");
+						int mmid = result.getInt("IDSong");
+						
+						long playDate = result.getLong("PlayDate");
+						long utcOffset = result.getLong("UTCOffset");
+						
+						long timestamp = playDate + utcOffset;
+						
+						// add attributes to played
+						Played played = new Played();
+						
+						played.setId(id);
+						played.setMmId(mmid);
+						played.setTimestamp(timestamp);
+					
+						// add played to list
+						playeds.add(played);
+					}
+				} finally {
+					try { result.close(); } catch (Exception e) { e.printStackTrace(); }
+				}
+			} finally {
+				try { stmt.close(); } catch (Exception e) { e.printStackTrace(); }
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return playeds;
 	}
 	
 	private boolean createConnection() {

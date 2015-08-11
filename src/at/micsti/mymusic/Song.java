@@ -45,8 +45,8 @@ public class Song {
 		return recordName;
 	}
 
-	public void setRecordName(String albumName) {
-		this.recordName = albumName;
+	public void setRecordName(String recordName) {
+		this.recordName = recordName;
 	}
 
 	public int getDiscNo() {
