@@ -2,15 +2,18 @@ package at.micsti.mymusic;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.List;
 
 import javax.xml.transform.Transformer;
@@ -20,6 +23,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 
 public class DataLoader {
@@ -54,6 +59,9 @@ public class DataLoader {
 	// xml document
 	private Document xmlDocument;
 	
+	// xml writer
+	private XmlWriter xmlWriter;
+	
 	public DataLoader() {
 		
 	}
@@ -76,6 +84,9 @@ public class DataLoader {
 		
 		// write xml
 		writeXml();
+		
+		// upload file
+		uploadFile();
 		
 		// write config file
 		writeConfigFile();
@@ -138,7 +149,7 @@ public class DataLoader {
 	}
 	
 	private void writeXml() {
-		XmlWriter xmlWriter = new XmlWriter();
+		xmlWriter = new XmlWriter();
 		
 		xmlWriter.setDbModification(modification);
 		xmlWriter.setSongs(songs);
@@ -167,37 +178,56 @@ public class DataLoader {
 	private boolean uploadFile() {
 		boolean success = true;
 		
-		int b_read = 0;
-		char[] buffer = new char[1024 * 10];
-		
 		try {
-			FileReader fr = new FileReader(xmlDocument.toString());
+			String xmlString = xmlWriter.getXmlString();
+			
+			// url post parameters
+			String urlParameters = "xmldata=" + URLEncoder.encode(xmlString, "UTF-8");
 			
 			URL url = new URL(uploadUrl);
 			
 			HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
+			
+			httpConnection.setDoInput(true);
+			httpConnection.setDoOutput(true);
 		
 			// set request headers
 			httpConnection.setRequestMethod("POST");
-			httpConnection.setRequestProperty("Content-Type", "text/xml");
 			httpConnection.setRequestProperty("CACHE-CONTROL", "no-cache");
+			httpConnection.setRequestProperty("Content-Length", "" + 
+		               Integer.toString(urlParameters.getBytes().length));
+			httpConnection.setRequestProperty("Accept", "application/json");
 			
 			// add xml data
-			OutputStreamWriter osWriter = new OutputStreamWriter(httpConnection.getOutputStream());
+			DataOutputStream dos = new DataOutputStream(httpConnection.getOutputStream());
+			dos.writeBytes(urlParameters);
+			dos.flush();
+			dos.close();
+						
+			// get insput stream
+			BufferedReader br = new BufferedReader(new InputStreamReader(httpConnection.getInputStream()));
+			StringBuilder sb = new StringBuilder();
 			
-			while ((b_read = fr.read(buffer)) != -1) {
-				osWriter.write(buffer, 0, b_read);
+			String inLine;
+			
+			while ((inLine = br.readLine()) != null) {
+				sb.append(inLine);
 			}
 			
-			// close reader and writer
-			osWriter.flush();
-			osWriter.close();
-			fr.close();
+			// get JSON response body
+			JSONObject jsonResponse = new JSONObject(sb.toString());
+			
+			// get message from JSON
+			String status = jsonResponse.getString("status");
+			String message = jsonResponse.getString("message");
 			
 			// get response properties
 			int statusCode = httpConnection.getResponseCode();
 			
-			System.out.println(statusCode);
+			if (statusCode != 200 || !status.equals("success")) {
+				success = false;
+				System.out.println(message);
+			}
 			
 			// close connection
 			httpConnection.disconnect();
@@ -212,6 +242,9 @@ public class DataLoader {
 		} catch (IOException e) {
 			success = false;
 			
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

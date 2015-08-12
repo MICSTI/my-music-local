@@ -1,16 +1,25 @@
 package at.micsti.mymusic;
 
+import java.io.StringWriter;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class XmlWriter {
 	
+	private Document xmlDocument;
 	private List<Song> songs;
 	private List<Played> playeds;
 	private int playedId;
@@ -21,6 +30,34 @@ public class XmlWriter {
 	}
 	
 	public Document getXmlDocument() {
+		buildXmlDocument();
+		
+		return xmlDocument;
+	}
+	
+	public String getXmlString() {
+		TransformerFactory tf = TransformerFactory.newInstance();
+		Transformer transformer;
+		try {
+			transformer = tf.newTransformer();
+			
+			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+			StringWriter writer = new StringWriter();
+			transformer.transform(new DOMSource(xmlDocument), new StreamResult(writer));
+			
+			return writer.getBuffer().toString().replaceAll("\n|\r", "");
+		} catch (TransformerConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	private void buildXmlDocument() {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
 		
@@ -143,13 +180,11 @@ public class XmlWriter {
 			lastPlayedId.appendChild(doc.createTextNode(String.valueOf(last_played_id)));
 			configElement.appendChild(lastPlayedId);
 			
-			return doc;
+			xmlDocument = doc;
 		} catch (ParserConfigurationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		return null;
 	}
 
 	public List<Song> getSongs() {
