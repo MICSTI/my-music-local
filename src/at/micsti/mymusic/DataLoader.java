@@ -7,6 +7,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 import javax.xml.transform.Transformer;
@@ -35,6 +39,9 @@ public class DataLoader {
 	// last imported played id
 	private int playedId;
 	
+	// upload url
+	private String uploadUrl;
+	
 	// songs list
 	private List<Song> songs;
 	
@@ -43,6 +50,9 @@ public class DataLoader {
 	
 	// result file path
 	private String resultFilePath; 
+	
+	// xml document
+	private Document xmlDocument;
 	
 	public DataLoader() {
 		
@@ -86,10 +96,13 @@ public class DataLoader {
 		    	   // second line is result file path
 		    	   resultFilePath = line.trim();
 		       } else if (count == 3) {
-		    	   // third line is modification timestamp
-		    	   modification = Long.valueOf(line.trim());
+		    	   // third line is the upload url
+		    	   uploadUrl = line.trim();
 		       } else if (count == 4) {
-		    	   // fourth line is last imported played id
+		    	   // fourth line is modification timestamp
+		    	   modification = Long.valueOf(line.trim());
+		       } else if (count == 5) {
+		    	   // fifth line is last imported played id
 		    	   playedId = Integer.valueOf(line.trim());
 		       }
 		       
@@ -131,7 +144,7 @@ public class DataLoader {
 		xmlWriter.setSongs(songs);
 		xmlWriter.setPlayeds(playeds);
 		
-		Document xmlDocument = xmlWriter.getXmlDocument();
+		xmlDocument = xmlWriter.getXmlDocument();
 		
 		// write document to file
 		TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -149,6 +162,60 @@ public class DataLoader {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	private boolean uploadFile() {
+		boolean success = true;
+		
+		int b_read = 0;
+		char[] buffer = new char[1024 * 10];
+		
+		try {
+			FileReader fr = new FileReader(xmlDocument.toString());
+			
+			URL url = new URL(uploadUrl);
+			
+			HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
+		
+			// set request headers
+			httpConnection.setRequestMethod("POST");
+			httpConnection.setRequestProperty("Content-Type", "text/xml");
+			httpConnection.setRequestProperty("CACHE-CONTROL", "no-cache");
+			
+			// add xml data
+			OutputStreamWriter osWriter = new OutputStreamWriter(httpConnection.getOutputStream());
+			
+			while ((b_read = fr.read(buffer)) != -1) {
+				osWriter.write(buffer, 0, b_read);
+			}
+			
+			// close reader and writer
+			osWriter.flush();
+			osWriter.close();
+			fr.close();
+			
+			// get response properties
+			int statusCode = httpConnection.getResponseCode();
+			
+			System.out.println(statusCode);
+			
+			// close connection
+			httpConnection.disconnect();
+		} catch (MalformedURLException e) {
+			success = false;
+			
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			success = false;
+			
+			e.printStackTrace();
+		} catch (IOException e) {
+			success = false;
+			
+			e.printStackTrace();
+		}
+		
+		return success;
 	}
 	
 	private long getFileModification(String path) {
@@ -172,6 +239,12 @@ public class DataLoader {
 			
 			// result file path
 			out.write(resultFilePath);
+			
+			// new line
+			out.write(System.lineSeparator());
+			
+			// upload url
+			out.write(uploadUrl);
 			
 			// new line
 			out.write(System.lineSeparator());
