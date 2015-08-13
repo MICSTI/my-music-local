@@ -174,6 +174,8 @@ public class XmlWriter {
 			
 			if (playeds.size() > 0) {
 				last_played_id = playeds.get(playeds.size() - 1).getId();
+			} else {
+				last_played_id = playedId;
 			}
 			
 			Element lastPlayedId = doc.createElement("last_imported_played_id");

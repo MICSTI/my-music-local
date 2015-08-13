@@ -24,9 +24,15 @@ public class DbConnector {
 	// database connection
 	private Connection connection;
 	
+	// played id
+	private int playedId;
+	
+	// modified time
+	private double modifiedTime;
+	
 	// SQL queries
-	private static String SONGS_QUERY = "SELECT * FROM Songs WHERE FileModified >= 41870";
-	private static String PLAYEDS_QUERY = "SELECT * FROM Played WHERE IDPlayed > 22000";
+	private static String SONGS_QUERY = "SELECT * FROM Songs WHERE FileModified >= ";
+	private static String PLAYEDS_QUERY = "SELECT * FROM Played WHERE IDPlayed > ";
 
 	public DbConnector() {
 		
@@ -44,11 +50,13 @@ public class DbConnector {
 	public List<Song> getSongs() {
 		List<Song> songs = new ArrayList<Song>();
 		
+		String songQuery = SONGS_QUERY + String.valueOf(modifiedTime);
+		
 		try {
 			Statement stmt = connection.createStatement();
 			
 			try {
-				ResultSet result = stmt.executeQuery(SONGS_QUERY);
+				ResultSet result = stmt.executeQuery(songQuery);
 				
 				try {
 					while (result.next()) {
@@ -101,20 +109,22 @@ public class DbConnector {
 	
 	public List<Played> getPlayeds() {
 		List<Played> playeds = new ArrayList<Played>();
+
+		String playedQuery = PLAYEDS_QUERY + playedId;
 		
 		try {
 			Statement stmt = connection.createStatement();
 			
 			try {
-				ResultSet result = stmt.executeQuery(PLAYEDS_QUERY);
+				ResultSet result = stmt.executeQuery(playedQuery);
 				
 				try {
 					while (result.next()) {
 						int id = result.getInt("IDPlayed");
 						int mmid = result.getInt("IDSong");
 						
-						double playDate = result.getLong("PlayDate");
-						double utcOffset = result.getLong("UTCOffset");
+						double playDate = result.getDouble("PlayDate");
+						double utcOffset = result.getDouble("UTCOffset");
 						
 						double timestamp = playDate + utcOffset;
 						
@@ -151,6 +161,22 @@ public class DbConnector {
 		}
 		
 		return false;
+	}
+
+	public int getPlayedId() {
+		return playedId;
+	}
+
+	public void setPlayedId(int playedId) {
+		this.playedId = playedId;
+	}
+
+	public double getModifiedTime() {
+		return modifiedTime;
+	}
+
+	public void setModifiedTime(double modifiedTime) {
+		this.modifiedTime = modifiedTime;
 	}
 	
 }

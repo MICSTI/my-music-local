@@ -23,6 +23,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Days;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
@@ -62,6 +65,10 @@ public class DataLoader {
 	// xml writer
 	private XmlWriter xmlWriter;
 	
+	// MediaMonkey reference date
+	private final static DateTimeZone AUSTRIA = DateTimeZone.forID("Europe/Vienna");
+	private final static DateTime mmRefDate = new DateTime(1900, 1, 1, 0, 0, 0, AUSTRIA);
+	
 	public DataLoader() {
 		
 	}
@@ -75,18 +82,19 @@ public class DataLoader {
 		// read config file
 		readConfigFile();
 		
+		// retrieve values from database
+		getValuesFromDatabase();
+		
 		// get database file modification time
 		modification = getFileModification(dbPath);
 		modification /= 1000;
-		
-		// retrieve values from database
-		getValuesFromDatabase();
 		
 		// write xml
 		writeXml();
 		
 		// upload file
-		uploadFile();
+		if (!uploadFile())
+			success = false;
 		
 		// write config file
 		writeConfigFile();
@@ -133,6 +141,11 @@ public class DataLoader {
 		dbConnector = new DbConnector();
 		dbConnector.init(dbPath);
 		
+		// set values
+		dbConnector.setModifiedTime(convert2MMDate(modification));
+		
+		dbConnector.setPlayedId(playedId);
+		
 		// get songs
 		songs = dbConnector.getSongs();
 		
@@ -154,6 +167,7 @@ public class DataLoader {
 		xmlWriter.setDbModification(modification);
 		xmlWriter.setSongs(songs);
 		xmlWriter.setPlayeds(playeds);
+		xmlWriter.setPlayedId(playedId);
 		
 		xmlDocument = xmlWriter.getXmlDocument();
 		
@@ -307,5 +321,45 @@ public class DataLoader {
 	private void initValues() {
 		modification = 0;
 		playedId = 0;
+	}
+	
+	private long convert2Timestamp(double mmDate) {
+		int fullDays = (int)Math.floor(mmDate);
+		
+		double dayPortion = mmDate - fullDays;
+		
+		double hours = dayPortion * 24;
+		double minutes = (hours - Math.floor(hours)) * 60;
+		double seconds = (minutes - Math.floor(minutes)) * 60;
+		
+		DateTime result = mmRefDate.plusDays(fullDays)
+								   .minusDays(2)
+								   .plusHours((int)Math.floor(hours))
+								   .plusMinutes((int)Math.floor(minutes))
+								   .plusSeconds((int)Math.floor(seconds));
+		
+		long timestamp = result.getMillis() / 1000L;
+		
+		return timestamp;
+	}
+	
+	private double convert2MMDate(long timestamp) {
+		DateTime compare = new DateTime(timestamp * 1000L);
+		
+		Days dayInterval = Days.daysBetween(mmRefDate, compare);
+		
+		DateTime dayPortion = compare.minusDays(dayInterval.getDays());
+		
+		int hours = dayPortion.getHourOfDay();
+		int minutes = dayPortion.getMinuteOfHour();
+		int seconds = dayPortion.getSecondOfMinute();
+		
+		double mmDate = dayInterval.getDays() + 2;
+		
+		mmDate += (hours / 24d);
+		mmDate += (minutes / (60d * 24d));
+		mmDate += (seconds / (60d * 60d * 24d));
+		
+		return mmDate;
 	}
 }
